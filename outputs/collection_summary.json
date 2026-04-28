@@ -1,0 +1,30 @@
+{
+  "musicbrainz_rows": 100000,
+  "unique_recordings": 75191,
+  "listenbrainz_rows": 55579,
+  "acousticbrainz_rows": 23794,
+  "listenbrainz_coverage_pct": 73.92,
+  "acousticbrainz_coverage_pct": 42.81,
+  "genre_counts": {
+    "pop": 5000,
+    "rock": 5000,
+    "hip-hop": 5000,
+    "jazz": 5000,
+    "classical": 5000,
+    "electronic": 5000,
+    "r&b": 5000,
+    "country": 5000,
+    "metal": 5000,
+    "folk": 5000,
+    "latin": 5000,
+    "soul": 5000,
+    "punk": 5000,
+    "reggae": 5000,
+    "blues": 5000,
+    "indie": 5000,
+    "dance": 5000,
+    "ambient": 5000,
+    "funk": 5000,
+    "gospel": 5000
+  }
+}

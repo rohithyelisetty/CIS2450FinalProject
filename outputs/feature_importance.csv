@@ -1,0 +1,181 @@
+model,feature,source_feature,importance_type,importance
+Gradient Boosting,cat__genre_classical,genre,tree_importance,0.24224864268840465
+Gradient Boosting,cat__genre_indie,genre,tree_importance,0.1688286286977433
+Gradient Boosting,num__track_age,track_age,tree_importance,0.08138638497531243
+Gradient Boosting,cat__genre_r&b,genre,tree_importance,0.07116666276683352
+Gradient Boosting,num__release_year,release_year,tree_importance,0.07035456939341372
+Gradient Boosting,num__has_audio_features,has_audio_features,tree_importance,0.05488589311822679
+Gradient Boosting,num__duration_sec,duration_sec,tree_importance,0.05331937648176592
+Gradient Boosting,num__audio_feature_missing_count,audio_feature_missing_count,tree_importance,0.051473118037423285
+Gradient Boosting,cat__genre_punk,genre,tree_importance,0.04244057306303843
+Gradient Boosting,cat__genre_metal,genre,tree_importance,0.03620894013151703
+Gradient Boosting,cat__genre_soul,genre,tree_importance,0.02292537358433599
+Gradient Boosting,cat__release_type_Album,release,tree_importance,0.016332050288085858
+Gradient Boosting,cat__genre_rock,genre,tree_importance,0.015737553532033086
+Gradient Boosting,cat__genre_folk,genre,tree_importance,0.010640343834057738
+Gradient Boosting,cat__genre_electronic,genre,tree_importance,0.009762679934022182
+Gradient Boosting,cat__genre_ambient,genre,tree_importance,0.008089644212817344
+Gradient Boosting,cat__genre_blues,genre,tree_importance,0.007189988900518074
+Gradient Boosting,cat__genre_country,genre,tree_importance,0.007143524746333225
+Gradient Boosting,cat__genre_gospel,genre,tree_importance,0.006451331513354207
+Gradient Boosting,cat__genre_hip-hop,genre,tree_importance,0.006428280248817642
+Gradient Boosting,cat__release_type_EP,release,tree_importance,0.003053708623590184
+Gradient Boosting,cat__release_type_Unknown,release,tree_importance,0.002613749052592812
+Gradient Boosting,cat__release_type_Other,release,tree_importance,0.0020141766227013544
+Gradient Boosting,cat__genre_jazz,genre,tree_importance,0.0018961331213963144
+Gradient Boosting,cat__genre_reggae,genre,tree_importance,0.0017467097967190307
+Gradient Boosting,cat__genre_pop,genre,tree_importance,0.0013975763784958442
+Gradient Boosting,cat__genre_dance,genre,tree_importance,0.001264612819187255
+Gradient Boosting,cat__genre_latin,genre,tree_importance,0.0008903046916533771
+Gradient Boosting,cat__genre_funk,genre,tree_importance,0.0006657374169152354
+Gradient Boosting,cat__release_type_Single,release,tree_importance,0.0006568754430826536
+Gradient Boosting,num__release_decade,release_decade,tree_importance,0.00041109932868427744
+Gradient Boosting,cat__release_type_Broadcast,release,tree_importance,0.00037575655692724996
+Gradient Boosting,num__career_x_duration_min,career_x_duration_min,tree_importance,0.0
+Gradient Boosting,num__genre_match_count,genre_match_count,tree_importance,0.0
+Gradient Boosting,cat__artist_country_Unknown,artist,tree_importance,0.0
+Gradient Boosting,cat__artist_type_Unknown,artist,tree_importance,0.0
+Gradient Boosting (tuned),cat__genre_classical,genre,tree_importance,0.19701891942585584
+Gradient Boosting (tuned),cat__genre_indie,genre,tree_importance,0.13296070540646038
+Gradient Boosting (tuned),num__duration_sec,duration_sec,tree_importance,0.1308494944859904
+Gradient Boosting (tuned),num__track_age,track_age,tree_importance,0.09461174197820774
+Gradient Boosting (tuned),num__release_year,release_year,tree_importance,0.08935008784309897
+Gradient Boosting (tuned),cat__genre_r&b,genre,tree_importance,0.062152318562621274
+Gradient Boosting (tuned),num__audio_feature_missing_count,audio_feature_missing_count,tree_importance,0.048538411228333994
+Gradient Boosting (tuned),cat__genre_punk,genre,tree_importance,0.04399489521739685
+Gradient Boosting (tuned),num__has_audio_features,has_audio_features,tree_importance,0.038664226720184845
+Gradient Boosting (tuned),cat__genre_metal,genre,tree_importance,0.022611113227825108
+Gradient Boosting (tuned),cat__genre_soul,genre,tree_importance,0.01728177074409644
+Gradient Boosting (tuned),cat__release_type_Album,release,tree_importance,0.014673901835013506
+Gradient Boosting (tuned),cat__genre_rock,genre,tree_importance,0.012446148902756304
+Gradient Boosting (tuned),cat__genre_electronic,genre,tree_importance,0.011941008860602453
+Gradient Boosting (tuned),cat__genre_country,genre,tree_importance,0.010587045636942616
+Gradient Boosting (tuned),cat__genre_folk,genre,tree_importance,0.010034632074072658
+Gradient Boosting (tuned),cat__genre_gospel,genre,tree_importance,0.008200946212699215
+Gradient Boosting (tuned),cat__genre_blues,genre,tree_importance,0.007138233387522592
+Gradient Boosting (tuned),cat__genre_hip-hop,genre,tree_importance,0.007009192082301871
+Gradient Boosting (tuned),cat__genre_ambient,genre,tree_importance,0.006974860384366203
+Gradient Boosting (tuned),cat__genre_reggae,genre,tree_importance,0.0043677601545804405
+Gradient Boosting (tuned),cat__genre_jazz,genre,tree_importance,0.00412522380978421
+Gradient Boosting (tuned),cat__genre_pop,genre,tree_importance,0.003834549898344495
+Gradient Boosting (tuned),cat__release_type_EP,release,tree_importance,0.0035633062908643235
+Gradient Boosting (tuned),cat__genre_dance,genre,tree_importance,0.0030212312750955797
+Gradient Boosting (tuned),cat__release_type_Unknown,release,tree_importance,0.0027074725898740513
+Gradient Boosting (tuned),cat__release_type_Single,release,tree_importance,0.0025871841914998153
+Gradient Boosting (tuned),cat__genre_latin,genre,tree_importance,0.0024405612873521377
+Gradient Boosting (tuned),num__release_decade,release_decade,tree_importance,0.0023356610079522428
+Gradient Boosting (tuned),cat__genre_funk,genre,tree_importance,0.00204936084423065
+Gradient Boosting (tuned),cat__release_type_Other,release,tree_importance,0.0019280344340729236
+Gradient Boosting (tuned),num__career_x_duration_min,career_x_duration_min,tree_importance,0.0
+Gradient Boosting (tuned),num__genre_match_count,genre_match_count,tree_importance,0.0
+Gradient Boosting (tuned),cat__release_type_Broadcast,release,tree_importance,0.0
+Gradient Boosting (tuned),cat__artist_country_Unknown,artist,tree_importance,0.0
+Gradient Boosting (tuned),cat__artist_type_Unknown,artist,tree_importance,0.0
+Lasso,cat__genre_classical,genre,absolute_coefficient,4.275911677123525
+Lasso,cat__genre_indie,genre,absolute_coefficient,3.4473847520178516
+Lasso,cat__genre_r&b,genre,absolute_coefficient,2.7362948192501717
+Lasso,cat__genre_punk,genre,absolute_coefficient,1.7989934966902186
+Lasso,cat__genre_country,genre,absolute_coefficient,1.0061846407919979
+Lasso,cat__genre_soul,genre,absolute_coefficient,0.9072165654775768
+Lasso,cat__genre_metal,genre,absolute_coefficient,0.8935624367939169
+Lasso,cat__genre_folk,genre,absolute_coefficient,0.8253540551555566
+Lasso,cat__genre_electronic,genre,absolute_coefficient,0.8138375140055355
+Lasso,cat__release_type_Album,release,absolute_coefficient,0.7454685097815107
+Lasso,num__has_audio_features,has_audio_features,absolute_coefficient,0.7426700434891556
+Lasso,cat__release_type_Other,release,absolute_coefficient,0.7385656704059161
+Lasso,cat__genre_blues,genre,absolute_coefficient,0.736776397603235
+Lasso,cat__genre_pop,genre,absolute_coefficient,0.5034606654155537
+Lasso,cat__release_type_Unknown,release,absolute_coefficient,0.43685654946529134
+Lasso,cat__genre_jazz,genre,absolute_coefficient,0.3833237544085833
+Lasso,num__release_decade,release_decade,absolute_coefficient,0.2906215321334552
+Lasso,num__track_age,track_age,absolute_coefficient,0.2769253504173831
+Lasso,cat__genre_ambient,genre,absolute_coefficient,0.2707814665612564
+Lasso,cat__genre_gospel,genre,absolute_coefficient,0.22870832011258466
+Lasso,cat__genre_rock,genre,absolute_coefficient,0.21692005259513572
+Lasso,cat__genre_latin,genre,absolute_coefficient,0.20362405454114613
+Lasso,cat__release_type_EP,release,absolute_coefficient,0.1247787845436669
+Lasso,cat__genre_dance,genre,absolute_coefficient,0.12145091395177521
+Lasso,num__duration_sec,duration_sec,absolute_coefficient,0.057640949056599874
+Lasso,cat__genre_reggae,genre,absolute_coefficient,0.03098545944840619
+Lasso,cat__genre_funk,genre,absolute_coefficient,0.019048122302657348
+Lasso,num__release_year,release_year,absolute_coefficient,0.010113219306394682
+Lasso,cat__genre_hip-hop,genre,absolute_coefficient,0.009280103558463624
+Lasso,num__genre_match_count,genre_match_count,absolute_coefficient,0.0058559371172135916
+Lasso,num__audio_feature_missing_count,audio_feature_missing_count,absolute_coefficient,6.906309833199737e-15
+Lasso,cat__release_type_Broadcast,release,absolute_coefficient,0.0
+Lasso,cat__release_type_Single,release,absolute_coefficient,0.0
+Lasso,num__career_x_duration_min,career_x_duration_min,absolute_coefficient,0.0
+Lasso,cat__artist_country_Unknown,artist,absolute_coefficient,0.0
+Lasso,cat__artist_type_Unknown,artist,absolute_coefficient,0.0
+Random Forest,cat__genre_classical,genre,tree_importance,0.21576361497849478
+Random Forest,cat__genre_indie,genre,tree_importance,0.1481187694381393
+Random Forest,num__duration_sec,duration_sec,tree_importance,0.11888658944233305
+Random Forest,num__release_year,release_year,tree_importance,0.10072997973032623
+Random Forest,num__has_audio_features,has_audio_features,tree_importance,0.089304397991486
+Random Forest,cat__genre_r&b,genre,tree_importance,0.07640093184485061
+Random Forest,num__track_age,track_age,tree_importance,0.07069152261127397
+Random Forest,cat__genre_punk,genre,tree_importance,0.04875372431048106
+Random Forest,cat__genre_metal,genre,tree_importance,0.021371769485971994
+Random Forest,cat__genre_soul,genre,tree_importance,0.015411992752878717
+Random Forest,cat__release_type_Album,release,tree_importance,0.01211129295024999
+Random Forest,cat__genre_electronic,genre,tree_importance,0.010643829723147554
+Random Forest,cat__genre_folk,genre,tree_importance,0.009872559089529874
+Random Forest,cat__genre_blues,genre,tree_importance,0.009539030662410443
+Random Forest,cat__genre_country,genre,tree_importance,0.008118875236409672
+Random Forest,cat__genre_hip-hop,genre,tree_importance,0.006387230759714634
+Random Forest,cat__genre_rock,genre,tree_importance,0.005997486765479236
+Random Forest,cat__genre_ambient,genre,tree_importance,0.005807506093930492
+Random Forest,cat__genre_gospel,genre,tree_importance,0.004652765359439934
+Random Forest,cat__release_type_EP,release,tree_importance,0.004546783113933438
+Random Forest,cat__release_type_Single,release,tree_importance,0.003209648112813165
+Random Forest,cat__genre_pop,genre,tree_importance,0.002956097580311723
+Random Forest,cat__release_type_Unknown,release,tree_importance,0.0028089790517405364
+Random Forest,num__release_decade,release_decade,tree_importance,0.002260376057254502
+Random Forest,cat__genre_latin,genre,tree_importance,0.001982172438221284
+Random Forest,cat__genre_jazz,genre,tree_importance,0.0018440846330666188
+Random Forest,cat__genre_dance,genre,tree_importance,0.0006482926297986598
+Random Forest,cat__release_type_Other,release,tree_importance,0.0005622734238817022
+Random Forest,num__audio_feature_missing_count,audio_feature_missing_count,tree_importance,0.0004370587568506187
+Random Forest,cat__genre_reggae,genre,tree_importance,0.0001253967982010692
+Random Forest,cat__genre_funk,genre,tree_importance,0.00005496817737930998
+Random Forest,cat__artist_country_Unknown,artist,tree_importance,0.0
+Random Forest,cat__release_type_Broadcast,release,tree_importance,0.0
+Random Forest,num__genre_match_count,genre_match_count,tree_importance,0.0
+Random Forest,num__career_x_duration_min,career_x_duration_min,tree_importance,0.0
+Random Forest,cat__artist_type_Unknown,artist,tree_importance,0.0
+Ridge,cat__genre_classical,genre,absolute_coefficient,4.14868137166605
+Ridge,cat__genre_indie,genre,absolute_coefficient,3.5971849974064387
+Ridge,cat__genre_r&b,genre,absolute_coefficient,2.608665237536869
+Ridge,cat__genre_punk,genre,absolute_coefficient,1.9645257003954393
+Ridge,cat__genre_metal,genre,absolute_coefficient,1.0429760783663335
+Ridge,cat__release_type_Broadcast,release,absolute_coefficient,1.0408777838920846
+Ridge,cat__genre_folk,genre,absolute_coefficient,0.987509480167389
+Ridge,cat__release_type_Unknown,release,absolute_coefficient,0.974146808887319
+Ridge,cat__genre_blues,genre,absolute_coefficient,0.9072743869365071
+Ridge,cat__genre_country,genre,absolute_coefficient,0.8912687478851854
+Ridge,cat__genre_soul,genre,absolute_coefficient,0.7758940812245207
+Ridge,cat__genre_electronic,genre,absolute_coefficient,0.686250563791746
+Ridge,cat__release_type_EP,release,absolute_coefficient,0.5350948681131731
+Ridge,cat__release_type_Other,release,absolute_coefficient,0.49717838891176663
+Ridge,cat__release_type_Single,release,absolute_coefficient,0.3973291160852171
+Ridge,cat__genre_pop,genre,absolute_coefficient,0.3828272100859892
+Ridge,num__audio_feature_missing_count,audio_feature_missing_count,absolute_coefficient,0.37636613575833266
+Ridge,num__has_audio_features,has_audio_features,absolute_coefficient,0.37636613575825645
+Ridge,cat__genre_latin,genre,absolute_coefficient,0.3758462522529796
+Ridge,cat__release_type_Album,release,absolute_coefficient,0.3685146202711692
+Ridge,cat__genre_rock,genre,absolute_coefficient,0.3650665235355998
+Ridge,num__release_decade,release_decade,absolute_coefficient,0.3186459954753722
+Ridge,cat__genre_dance,genre,absolute_coefficient,0.297819825345402
+Ridge,cat__genre_jazz,genre,absolute_coefficient,0.2695549421823102
+Ridge,cat__genre_reggae,genre,absolute_coefficient,0.2023586879779124
+Ridge,num__track_age,track_age,absolute_coefficient,0.158192023180312
+Ridge,num__release_year,release_year,absolute_coefficient,0.15819202317972816
+Ridge,cat__genre_hip-hop,genre,absolute_coefficient,0.15487094781426278
+Ridge,cat__genre_ambient,genre,absolute_coefficient,0.14239187417690538
+Ridge,cat__genre_funk,genre,absolute_coefficient,0.1103407267974078
+Ridge,cat__genre_gospel,genre,absolute_coefficient,0.10023957919933424
+Ridge,num__duration_sec,duration_sec,absolute_coefficient,0.05955511226135644
+Ridge,num__genre_match_count,genre_match_count,absolute_coefficient,0.006952010292837837
+Ridge,num__career_x_duration_min,career_x_duration_min,absolute_coefficient,0.0
+Ridge,cat__artist_country_Unknown,artist,absolute_coefficient,0.0
+Ridge,cat__artist_type_Unknown,artist,absolute_coefficient,0.0
