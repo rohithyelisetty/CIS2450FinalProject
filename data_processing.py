@@ -28,24 +28,6 @@ What happens here, end to end:
    key, key_scale) into `_enc` columns; original strings are kept for display.
 8. Run 8 DuckDB queries: per-genre summary, decade trend, top artists, country
    breakdown, duration buckets, genre overlap, and two audio-coverage views.
-
-Rubric coverage hit from this file:
-- Joining: 3-way equi-join on MBID across MusicBrainz, ListenBrainz, and
-  AcousticBrainz (`build_dataframe`).
-- Deduplication: `_aggregate_musicbrainz_rows` collapses multi-genre duplicates
-  on MBID and aggregates genre tags into a list.
-- Feature engineering: derived temporal features (release_decade, track_age,
-  artist_career_age), interaction terms (tempo_x_dance, career_x_duration_min),
-  and the log-transformed regression target.
-- Outlier handling: `_winsorize` clips continuous features at [1%, 99%].
-- Categorical encoding: `_add_categorical_encodings` produces `_enc` columns
-  on every categorical feature.
-- Null handling: nulls are kept in the processed CSV and imputed inside the
-  sklearn pipelines later (see models.py) — that way no leakage.
-- SQL analytics: `run_sql_analytics` runs 8 DuckDB queries on the in-memory
-  frame and writes one CSV per section.
-- Imbalance setup: `make_balanced_classification_split` derives
-  `is_high_replay = top-25% of repeat_listens` for the classification demo.
 """
 from __future__ import annotations
 

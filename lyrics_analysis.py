@@ -30,25 +30,6 @@ Aggregate comparisons:
   spiritual/etc.) and per-quartile topic distribution.
 - Lyrics-only and combined (lyrics + metadata) Ridge / GBM regressions to test
   whether NLP features add lift on top of metadata.
-
-Setup
------
-1. Download the dataset from:
-   https://www.kaggle.com/datasets/nikhilnayak123/5-million-song-lyrics-dataset
-2. Set KAGGLE_LYRICS_CSV below to the path of the downloaded CSV file
-   (or export the env var KAGGLE_LYRICS_CSV=<path>).
-3. Run: python lyrics_analysis.py
-
-Rubric coverage hit from this file:
-- Text representations & NLP features: VADER, TTR, repetitiveness, Flesch
-  readability, bigram frequency, rare-word ratio.
-- Unsupervised learning: 8-topic Latent Dirichlet Allocation surfaced as
-  topic-distribution plots.
-- Record linking / entity resolution: normalized artist+title matching to an
-  external dataset with no shared key, ~37% recall.
-- Streaming / large-data handling: the 9.2 GB CSV is read in 50k-row chunks.
-- Comparative modeling: lyrics-only vs combined (lyrics + metadata) regressions
-  to quantify NLP lift.
 """
 from __future__ import annotations
 

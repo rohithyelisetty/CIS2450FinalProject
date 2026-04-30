@@ -19,14 +19,6 @@ model thinks of it), and then a row of tabs for the deeper workspaces:
                     it, the residual vs ground truth, and a per-song lyrics
                     breakdown.
 - Data Quality    : missingness chart for sanity checking.
-
-Rubric coverage hit from this file:
-- Interactive dashboard with 7 dedicated tabs.
-- Live scoring console using the saved sklearn pipeline.
-- Per-song model-fit view (predicted vs actual + residual + percentile rank).
-- Free-text song search across the processed dataset.
-- Filterable genre/decade workspace.
-- Embeds all NLP plots from lyrics_analysis.py.
 """
 from __future__ import annotations
 
