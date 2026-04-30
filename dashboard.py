@@ -73,8 +73,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Minimal styling — keep it close to Streamlit defaults so charts and tables
-# do the talking, not the chrome.
+# Light-mode styling with a warmer color palette so charts and tables stand out
+# against a soft tinted background instead of bare white.
 st.markdown(
     """
     <style>
@@ -83,24 +83,73 @@ st.markdown(
         display: none !important;
     }
 
+    .stApp {
+        background:
+            radial-gradient(circle at 8% 0%, rgba(224, 122, 95, 0.18), transparent 32%),
+            radial-gradient(circle at 92% 6%, rgba(31, 111, 120, 0.18), transparent 30%),
+            radial-gradient(circle at 50% 100%, rgba(245, 197, 96, 0.14), transparent 38%),
+            linear-gradient(180deg, #fdfaf6 0%, #f3ece4 100%);
+    }
+
     .app-title {
-        font-size: 1.6rem;
-        font-weight: 700;
-        margin: 0.25rem 0 0.1rem 0;
-        color: #1d232b;
+        font-size: 1.9rem;
+        font-weight: 800;
+        margin: 0.4rem 0 0.15rem 0;
+        background: linear-gradient(90deg, #1f6f78 0%, #e07a5f 60%, #f5c560 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .app-subtitle {
         color: #5c6672;
-        font-size: 0.95rem;
+        font-size: 1rem;
+        font-weight: 600;
         margin: 0 0 1rem 0;
     }
 
     div[data-testid="stMetric"] {
-        background: #ffffff;
-        border: 1px solid #e6e8ec;
-        border-radius: 8px;
-        padding: 0.6rem 0.85rem;
+        background: linear-gradient(135deg, #ffffff 0%, #fff4ec 100%);
+        border: 1px solid rgba(224, 122, 95, 0.35);
+        border-left: 4px solid #e07a5f;
+        border-radius: 10px;
+        padding: 0.7rem 0.95rem;
+        box-shadow: 0 4px 14px rgba(31, 41, 55, 0.06);
+    }
+
+    div[data-testid="stMetric"]:nth-of-type(2n) {
+        background: linear-gradient(135deg, #ffffff 0%, #ecf6f7 100%);
+        border-color: rgba(31, 111, 120, 0.35);
+        border-left-color: #1f6f78;
+    }
+
+    div[data-testid="stMetric"]:nth-of-type(3n) {
+        background: linear-gradient(135deg, #ffffff 0%, #fdf3d9 100%);
+        border-color: rgba(245, 197, 96, 0.45);
+        border-left-color: #f5c560;
+    }
+
+    /* Tab strip — give it a tinted underline accent */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 4px;
+        border-bottom: 2px solid rgba(31, 111, 120, 0.18);
+    }
+    .stTabs [data-baseweb="tab"] {
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 8px 8px 0 0;
+        padding: 0.4rem 0.9rem;
+    }
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(180deg, #fff4ec 0%, #ffffff 100%);
+        color: #1f6f78;
+        font-weight: 700;
+        box-shadow: inset 0 -3px 0 #e07a5f;
+    }
+
+    /* Bordered containers (st.container(border=True)) get a softer tint */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background: rgba(255, 255, 255, 0.65);
+        border-color: rgba(31, 111, 120, 0.2) !important;
     }
     </style>
     """,
@@ -250,10 +299,8 @@ def render_header(df: pl.DataFrame):
         best_model = results_pd.sort_values("test_r2", ascending=False).iloc[0]
 
     st.markdown(
-        '<div class="app-title">Music Replayability Analysis</div>'
-        '<div class="app-subtitle">CIS 2450 — predicting repeat listens from metadata, '
-        'audio features, and lyrics across MusicBrainz / ListenBrainz / AcousticBrainz '
-        'and the Kaggle 5M lyrics corpus.</div>',
+        '<div class="app-title">CIS 2450 Final Project Dashboard</div>'
+        '<div class="app-subtitle">By: Chinmay Govind and Rohith Yelisetty</div>',
         unsafe_allow_html=True,
     )
 
