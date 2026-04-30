@@ -7,8 +7,14 @@ live scoring.
 from __future__ import annotations
 
 import json
+import os
+import pickle
+import re
+import string
+from collections import Counter
 from pathlib import Path
 
+import nltk
 import numpy as np
 import plotly.express as px
 import polars as pl
@@ -18,6 +24,7 @@ from joblib import load
 from config import (
     BEST_MODEL_FILE,
     BEST_PARAMS_JSON,
+    CACHE_DIR,
     COLLECTION_SUMMARY_JSON,
     CURRENT_YEAR,
     DATA_SUMMARY_JSON,
@@ -31,6 +38,7 @@ from config import (
     PCA_SUMMARY_JSON,
     PRIMARY_MODEL_AUDIO_COVERAGE_THRESHOLD,
     PROCESSED_CSV,
+    RAW_TARGET,
     TARGET,
 )
 
@@ -39,7 +47,7 @@ st.set_page_config(
     page_title="Replayability Control Center",
     page_icon="",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 st.markdown(
@@ -65,9 +73,9 @@ st.markdown(
         color: var(--ink);
     }
 
-    [data-testid="stSidebar"] {
-        background: rgba(248, 242, 234, 0.96);
-        border-right: 1px solid var(--border);
+    [data-testid="stSidebar"],
+    [data-testid="stSidebarCollapsedControl"] {
+        display: none !important;
     }
 
     .hero-shell {
@@ -394,7 +402,7 @@ def render_header(df: pl.DataFrame):
         stat_card("Best Model", best_label, best_note)
 
     st.markdown("### Analysis Modules")
-    m1, m2, m3, m4 = st.columns(4)
+    m1, m2, m3, m4, m5, m6 = st.columns(6)
     with m1:
         module_card(
             "Module 01",
@@ -422,6 +430,20 @@ def render_header(df: pl.DataFrame):
             "Prediction Console",
             "Build a hypothetical track profile and estimate its replayability with the saved production model.",
             "Use Prediction Console for live scoring.",
+        )
+    with m5:
+        module_card(
+            "Module 05",
+            "Lyrics Analysis",
+            "Explore sentiment, vocabulary richness, repetitiveness, and LDA topics across high- and low-replay songs.",
+            "Switch to Lyrics Analysis for text insights.",
+        )
+    with m6:
+        module_card(
+            "Module 06",
+            "Song Explorer",
+            "Search any song by title, view its metadata, and get a live lyric analysis with sentiment and top words.",
+            "Use Song Explorer to drill into a single track.",
         )
 
 
@@ -933,6 +955,266 @@ def show_prediction_console(df: pl.DataFrame):
     )
 
 
+def show_lyrics_analysis():
+    st.subheader("Lyrics Analysis")
+
+    features_df  = load_dataframe(OUTPUT_DIR / "lyrics_features.csv")
+    word_freq_df = load_dataframe(OUTPUT_DIR / "lyrics_word_freq_comparison.csv")
+    lyrics_summary = load_markdown(OUTPUT_DIR / "lyrics_summary.md")
+
+    if features_df is None:
+        st.warning(
+            "No lyrics analysis data found. Run `python lyrics_analysis.py` to generate it."
+        )
+        return
+
+    features_pd = features_df.to_pandas()
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Tracks Analyzed", f"{len(features_pd):,}")
+    c2.metric("Avg Sentiment (VADER)", f"{features_pd['sentiment_compound'].mean():.3f}")
+    c3.metric("Avg Vocabulary Richness", f"{features_pd['type_token_ratio'].mean():.3f}")
+    c4.metric("Avg Repetitiveness", f"{features_pd['repetitiveness'].mean():.3f}")
+
+    st.markdown("---")
+
+    plot_rows = [
+        ("lyrics1_sentiment_by_quartile.png", "lyrics2_top_words_comparison.png"),
+        ("lyrics3_wordclouds.png",             "lyrics4_features_correlation.png"),
+        ("lyrics5_topic_distribution.png",     "lyrics6_complexity_vs_replay.png"),
+    ]
+    for left_name, right_name in plot_rows:
+        lp, rp = OUTPUT_DIR / left_name, OUTPUT_DIR / right_name
+        col_l, col_r = st.columns(2)
+        if lp.exists():
+            col_l.image(str(lp), use_container_width=True)
+        if rp.exists():
+            col_r.image(str(rp), use_container_width=True)
+
+    genre_sent = OUTPUT_DIR / "lyrics7_sentiment_by_genre.png"
+    if genre_sent.exists():
+        st.image(str(genre_sent), use_container_width=True)
+
+    extra_plots = [
+        ("lyrics8_bigrams_comparison.png", "lyrics9_rarity_vs_replay.png"),
+        ("lyrics10_word_length_vs_replay.png", "lyrics11_model_comparison.png"),
+    ]
+    for left_name, right_name in extra_plots:
+        lp, rp = OUTPUT_DIR / left_name, OUTPUT_DIR / right_name
+        col_l, col_r = st.columns(2)
+        if lp.exists():
+            col_l.image(str(lp), use_container_width=True)
+        if rp.exists():
+            col_r.image(str(rp), use_container_width=True)
+
+    model_results_df = load_dataframe(OUTPUT_DIR / "lyrics_model_results.csv")
+    if model_results_df is not None:
+        st.markdown("#### Lyrics Prediction Model Results")
+        render_table(model_results_df.to_pandas())
+
+    if word_freq_df is not None:
+        st.markdown("#### Word Frequency: High vs Low Replay (top 30)")
+        render_table(word_freq_df.head(30).to_pandas())
+
+    if lyrics_summary:
+        with st.expander("Full Lyrics Summary Report", expanded=False):
+            st.markdown(lyrics_summary)
+
+
+@st.cache_data(show_spinner=False)
+def _load_lyrics_cache() -> dict[str, str]:
+    path = CACHE_DIR / "kaggle_lyrics_cache.pkl"
+    if not path.exists():
+        return {}
+    with open(path, "rb") as fh:
+        return pickle.load(fh)
+
+
+def _fetch_genius_lyrics(title: str, artist: str) -> str | None:
+    token = os.environ.get("GENIUS_API_TOKEN")
+    if not token:
+        return None
+    try:
+        import lyricsgenius
+        genius = lyricsgenius.Genius(
+            token, quiet=True, timeout=12, retries=1,
+            skip_non_songs=True, remove_section_headers=False,
+        )
+        song = genius.search_song(title, artist)
+        if song and song.lyrics:
+            return song.lyrics
+    except Exception:
+        pass
+    return None
+
+
+def _analyze_lyrics(lyrics: str) -> dict:
+    nltk.download("vader_lexicon", quiet=True)
+    nltk.download("stopwords", quiet=True)
+    from nltk.sentiment.vader import SentimentIntensityAnalyzer
+    from nltk.corpus import stopwords as nltk_sw
+
+    text = re.sub(r"\[.*?\]", " ", lyrics)
+    text = re.sub(r"Embed\s*$", " ", text, flags=re.IGNORECASE).strip()
+
+    lines  = [ln for ln in text.splitlines() if ln.strip()]
+    sw     = set(nltk_sw.words("english")) | {
+        "oh", "yeah", "na", "la", "ooh", "ah", "hey", "uh", "mm",
+        "gonna", "wanna", "gotta", "ain", "em", "im", "ive",
+    }
+    flat   = text.lower().translate(str.maketrans("", "", string.punctuation))
+    tokens = [w for w in flat.split() if w not in sw and len(w) > 1 and not w.isdigit()]
+
+    total  = len(tokens)
+    unique = len(set(tokens))
+    ttr    = unique / max(total, 1)
+
+    line_counts = Counter(ln.strip().lower() for ln in lines)
+    dup_lines   = sum(v - 1 for v in line_counts.values() if v > 1)
+    rep         = dup_lines / max(len(lines), 1)
+
+    sia  = SentimentIntensityAnalyzer()
+    sent = sia.polarity_scores(text)
+
+    top_words  = [w for w, _ in Counter(tokens).most_common(15)]
+    top_counts = [c for _, c in Counter(tokens).most_common(15)]
+
+    result: dict = {
+        "word_count":         total,
+        "unique_words":       unique,
+        "type_token_ratio":   round(ttr, 4),
+        "line_count":         len(lines),
+        "repetitiveness":     round(rep, 4),
+        "sentiment_compound": round(sent["compound"], 4),
+        "sentiment_positive": round(sent["pos"], 4),
+        "sentiment_negative": round(sent["neg"], 4),
+        "sentiment_neutral":  round(sent["neu"], 4),
+        "top_words":          top_words,
+        "top_counts":         top_counts,
+        "cleaned_text":       text,
+    }
+    try:
+        import textstat as ts
+        result["flesch_reading_ease"]  = round(ts.flesch_reading_ease(text), 1)
+        result["flesch_kincaid_grade"] = round(ts.flesch_kincaid_grade(text), 1)
+    except Exception:
+        pass
+    return result
+
+
+def show_song_explorer(df: pl.DataFrame):
+    st.subheader("Song Explorer")
+
+    avail_cols = df.columns
+    select_cols = [c for c in ["mbid", "title", "artist_name", "genre", TARGET, RAW_TARGET,
+                                "release_year", "duration_sec"] if c in avail_cols]
+    songs_df = (
+        df.select(select_cols)
+        .drop_nulls(subset=["title", "artist_name"])
+        .sort(TARGET, descending=True)
+        .head(10_000)
+    )
+
+    titles  = songs_df["title"].to_list()
+    artists = songs_df["artist_name"].to_list()
+    options = [f"{t} — {a}" for t, a in zip(titles, artists)]
+
+    selected_label = st.selectbox(
+        "Search for a song (type to filter)",
+        options=[""] + options,
+        format_func=lambda x: "— select a song —" if x == "" else x,
+    )
+
+    if not selected_label:
+        st.caption("Start typing a song title or artist name above.")
+        return
+
+    idx = options.index(selected_label)
+    row = songs_df.row(idx, named=True)
+
+    # ── song metadata ─────────────────────────────────────────────────────────
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Artist", row.get("artist_name") or "—")
+    c2.metric("Genre",  row.get("genre") or "—")
+
+    yr = row.get("release_year")
+    c3.metric("Release Year", str(int(yr)) if yr is not None else "—")
+
+    raw = row.get(RAW_TARGET)
+    c4.metric("Repeat Listens", f"{int(raw):,}" if raw is not None else "—")
+
+    dur = row.get("duration_sec")
+    c5.metric("Duration", f"{int(dur // 60)}:{int(dur % 60):02d}" if dur is not None else "—")
+
+    st.markdown("---")
+
+    # ── lyrics: cache → Genius ────────────────────────────────────────────────
+    mbid   = row.get("mbid", "")
+    cache  = _load_lyrics_cache()
+    lyrics = cache.get(mbid)
+
+    if lyrics is None:
+        with st.spinner(f'Fetching lyrics for "{row["title"]}" from Genius…'):
+            lyrics = _fetch_genius_lyrics(row["title"], row["artist_name"])
+
+    if lyrics is None:
+        if not os.environ.get("GENIUS_API_TOKEN"):
+            st.info(
+                "This song isn't in the local lyrics cache. "
+                "Set `GENIUS_API_TOKEN` in your `.env` file and restart the dashboard to enable live Genius fetching."
+            )
+        else:
+            st.warning("Lyrics not found for this song in the local cache or on Genius.")
+        return
+
+    # ── per-song analysis ─────────────────────────────────────────────────────
+    st.markdown("#### Lyrics Analysis")
+    a = _analyze_lyrics(lyrics)
+
+    r1, r2, r3, r4, r5 = st.columns(5)
+    r1.metric("Word Count",        f"{a['word_count']:,}")
+    r2.metric("Unique Words",      f"{a['unique_words']:,}")
+    r3.metric("Vocabulary (TTR)",  f"{a['type_token_ratio']:.3f}")
+    r4.metric("Repetitiveness",    f"{a['repetitiveness']:.3f}")
+    r5.metric("Sentiment",         f"{a['sentiment_compound']:+.3f}")
+
+    if "flesch_reading_ease" in a:
+        r6, r7, *_ = st.columns(5)
+        r6.metric("Flesch Reading Ease",   f"{a['flesch_reading_ease']:.1f}")
+        r7.metric("Flesch-Kincaid Grade",  f"{a['flesch_kincaid_grade']:.1f}")
+
+    col_l, col_r = st.columns(2)
+    with col_l:
+        fig = px.bar(
+            x=["Positive", "Negative", "Neutral"],
+            y=[a["sentiment_positive"], a["sentiment_negative"], a["sentiment_neutral"]],
+            color=["Positive", "Negative", "Neutral"],
+            color_discrete_map={"Positive": "#2ecc71", "Negative": "#e74c3c", "Neutral": "#bdc3c7"},
+            title="Sentiment Breakdown",
+        )
+        fig.update_layout(showlegend=False, xaxis_title="", yaxis_title="Proportion")
+        render_chart(fig)
+
+    with col_r:
+        fig = px.bar(
+            x=a["top_counts"],
+            y=a["top_words"],
+            orientation="h",
+            color=a["top_counts"],
+            color_continuous_scale="Teal",
+            title="Top 15 Words",
+        )
+        fig.update_layout(
+            yaxis={"categoryorder": "total ascending"},
+            xaxis_title="Count", yaxis_title="",
+            coloraxis_showscale=False,
+        )
+        render_chart(fig)
+
+    with st.expander("Show full lyrics", expanded=False):
+        st.text(a["cleaned_text"])
+
+
 def show_data_notes(df: pl.DataFrame):
     st.subheader("Data Notes")
     missing_df = build_missingness_df(df).head(12).to_pandas()
@@ -949,29 +1231,6 @@ def show_data_notes(df: pl.DataFrame):
     render_chart(fig)
 
 
-st.title("Music Replayability Dashboard")
-st.caption("A modular analytics workspace for replayability exploration, model review, and live scoring.")
-
-with st.sidebar:
-    st.markdown("### Artifact Checklist")
-    for label, exists in artifact_status():
-        st.write(f"{'OK' if exists else '...'} {label}")
-    st.markdown("---")
-    st.markdown("### Run Order")
-    st.code(
-        "python data_collection.py\n"
-        "python data_processing.py\n"
-        "python eda.py\n"
-        "python models.py\n"
-        "streamlit run dashboard.py"
-    )
-    st.markdown("---")
-    st.markdown("### Layout")
-    st.caption(
-        "This version is intentionally structured like an analysis dashboard template: "
-        "hero section, module cards, then dedicated workspaces below."
-    )
-
 df = load_dataframe(PROCESSED_CSV)
 if df is None:
     st.warning("No processed dataset found yet. Run `python data_processing.py` first.")
@@ -979,8 +1238,9 @@ if df is None:
 
 render_header(df)
 
-command_tab, genre_tab, model_tab, predict_tab, notes_tab = st.tabs(
-    ["Command Center", "Genre Lab", "Model Studio", "Prediction Console", "Data Notes"]
+command_tab, genre_tab, model_tab, predict_tab, lyrics_tab, explorer_tab, notes_tab = st.tabs(
+    ["Command Center", "Genre Lab", "Model Studio", "Prediction Console",
+     "Lyrics Analysis", "Song Explorer", "Data Notes"]
 )
 
 with command_tab:
@@ -994,6 +1254,12 @@ with model_tab:
 
 with predict_tab:
     show_prediction_console(df)
+
+with lyrics_tab:
+    show_lyrics_analysis()
+
+with explorer_tab:
+    show_song_explorer(df)
 
 with notes_tab:
     show_data_notes(df)
