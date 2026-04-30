@@ -31,7 +31,6 @@ Rubric coverage hit from this file:
 """
 from __future__ import annotations
 
-import argparse
 import json
 import os
 import pickle
@@ -275,7 +274,6 @@ def fetch_acousticbrainz(
     attempted_mbids.update(features.keys())
     target_mbids = list(dict.fromkeys(mbid for mbid in target_mbids if mbid))
     remaining_mbids = [mbid for mbid in target_mbids if mbid not in attempted_mbids]
-    remaining_mbids = set()
     if not remaining_mbids:
         print(f"[AB] All {len(target_mbids):,} target MBIDs were already processed.")
         return features
@@ -451,10 +449,6 @@ def main():
         refresh=REFRESH,
         max_tracks=None,
     )
-    # lyrics_rows = {}
-    # if not args.skip_lyrics:
-    #     lyrics_rows = fetch_genius_lyrics(mb_rows, refresh=args.refresh)
-
     _write_collection_summary(mb_rows, lb_rows, ab_rows)
     print("\nData collection complete. Next: `python data_processing.py`.")
 
