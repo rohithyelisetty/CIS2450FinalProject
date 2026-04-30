@@ -1,96 +1,91 @@
-# Music Replayability Final Project
-test edit
-This project predicts **music replayability** using linked data from multiple music APIs:
+# Music Replayability Analysis
 
-- **MusicBrainz** for recording and artist metadata
-- **ListenBrainz** for popularity and listening counts
-- **AcousticBrainz** for optional low-level audio enrichment where coverage exists
-- **Genius** for optional sampled lyrical context
+Predicts **music replayability** by linking data from multiple music APIs and a large-scale lyrics corpus.
 
-The main prediction target is:
+**Authors:** Chinmay Govind · Rohith Yelisetty
 
-- `repeat_listens = total_listen_count - total_user_count`
-- `log_repeat_listens = log(1 + repeat_listens)`
+## Data Sources
 
-The overall workflow is modular and mirrors the final deliverable requirements: data collection, preprocessing, EDA, modeling, and dashboarding.
+| Source | What it provides |
+|---|---|
+| MusicBrainz | Recording metadata: title, artist, genre, release type, country |
+| ListenBrainz | Popularity signals: total listens, unique listeners, repeat listens |
+| AcousticBrainz | Optional low-level audio features (BPM, key, energy, danceability) |
+| Kaggle 5M Lyrics | NLP features: sentiment, vocabulary richness, LDA topics, repetitiveness |
+
+**Prediction target:** `log_repeat_listens = log(1 + total_listens - unique_listeners)`
 
 ## Project Structure
 
-- `config.py`
-  Shared constants, paths, feature definitions, and output locations.
-- `data_collection.py`
-  Pulls data from the external APIs, writes raw CSVs, and caches responses to pickle files.
-- `data_processing.py`
-  Deduplicates recordings, links the sources together with Polars joins, engineers features, and runs DuckDB SQL analysis.
-- `eda.py`
-  Generates 8 EDA plots and writes `outputs/eda_summary.md`.
-- `models.py`
-  Trains baseline and advanced models, includes a PCA-based regression path, performs 5-fold CV and RandomizedSearchCV, saves model artifacts, and writes `outputs/model_summary.md`.
-- `dashboard.py`
-  Streamlit dashboard with tabs for Overview, EDA, Modeling, Live Predictor, and Genre Explorer.
-- `RUBRIC_EXPLANATION.md`
-  Point-by-point explanation of how the final codebase addresses the rubric.
+```
+config.py              shared constants, paths, feature lists
+data_collection.py     fetches MusicBrainz / ListenBrainz / AcousticBrainz APIs
+data_processing.py     Polars joins, feature engineering, DuckDB SQL analytics
+eda.py                 8 EDA plots → outputs/eda_summary.md
+models.py              7 regression models + classification, PCA, tuning → outputs/model_summary.md
+lyrics_analysis.py     loads Kaggle lyrics, NLP features, LDA topics, 11 plots, prediction model
+dashboard.py           Streamlit dashboard (6 tabs)
+```
 
-## Installation
+## Setup
 
 ```bash
 pip install -r requirements.txt
 ```
 
-If you want the optional Genius stage, set:
-
+Optional — needed for live lyric fetch in Song Explorer:
 ```bash
 export GENIUS_API_TOKEN="your_token_here"
 ```
 
-## Recommended Run Order
-
-```bash
-python data_collection.py --per-genre 5000
-python data_processing.py
-python eda.py
-python models.py
-streamlit run dashboard.py
+For lyrics analysis, download the Kaggle dataset and place it at `lyrics/ds2.csv`:
+```
+https://www.kaggle.com/datasets/nikhilnayak123/5-million-song-lyrics-dataset
 ```
 
-## Important Notes
+## Run Order
 
-- The collection script is designed to target **50,000+ cleaned rows** by collecting up to 100,000 raw MusicBrainz rows across 20 genres.
-- API responses are cached locally in `cache/` so you do not need to re-fetch everything on every run.
-- The preprocessing script fixes the earlier artist life-span issue, removes invalid targets, and deduplicates recordings that appeared in multiple genre searches.
-- AcousticBrainz coverage is partial, so the project treats audio variables as an enrichment layer rather than a required source for every row.
-- The main modeling path is designed to remain stable even when audio coverage is sparse.
-- The dashboard depends on the processed dataset and model artifacts in `outputs/`.
+```bash
+python data_collection.py --per-genre 5000   # fetch ~50k songs across 20 genres
+python data_processing.py                    # join, clean, engineer features
+python eda.py                                # EDA plots
+python models.py                             # train regression + classification models
+python lyrics_analysis.py                   # NLP analysis (uses pickle cache after first run)
+streamlit run dashboard.py                  # launch dashboard
+```
+
+API responses are cached in `cache/` — subsequent runs skip re-fetching. The Kaggle CSV scan (9.2 GB) is also cached after the first run of `lyrics_analysis.py`.
+
+## Dashboard Tabs
+
+| Tab | Contents |
+|---|---|
+| Command Center | Dataset health cards, genre distribution, decade replayability trend, top-25 artist leaderboard, EDA + model summaries |
+| Genre Lab | Interactive genre/decade filter with trend lines, box plots, duration scatter, artist leaderboard |
+| Model Studio | CV vs holdout R² chart, RMSE/MAE comparison, feature importance, tuned GBM params, actual vs predicted scatter |
+| Prediction Console | Live scoring form — enter a track profile and get a predicted log replay count + dataset percentile |
+| Lyrics Analysis | 11 NLP/model plots, lyrics prediction model results table, word frequency comparison, full summary report |
+| Song Explorer | Typeahead search over top 10k songs; per-song sentiment, top words, vocabulary metrics, lyrics viewer |
+
+## Key Results
+
+- **Best regression model:** Tuned GBM — holdout R² ≈ 0.21, RMSE ≈ 2.26
+- **Lyrics vs metadata:** Lyrics alone explain ~4% of replay variance; metadata GBM reaches ~20%; combining both gives R² ≈ 0.208
+- **23,641 songs** matched to lyrics via exact + fuzzy artist/title matching
+- **LDA topics:** 8 coherent themes (multilingual, romantic, hip-hop, spiritual, rootsy, dance/rock, conversational, temporal)
 
 ## Main Output Files
 
-After a full run, the `outputs/` folder should contain files such as:
-
-- `raw_musicbrainz.csv`
-- `raw_listenbrainz.csv`
-- `raw_acousticbrainz.csv`
-- `music_dataset_processed.csv`
-- `sql_*.csv`
-- `eda_summary.md`
-- `model_results.csv`
-- `feature_importance.csv`
-- `model_predictions.csv`
-- `best_gbm_model.joblib`
-- `best_gbm_params.json`
-- `pca_summary.json`
-- `model_summary.md`
-
-## Dashboard Demo Content
-
-The Streamlit dashboard includes:
-
-- **Overview**
-  Dataset size, genre coverage, collection coverage, and SQL-driven summaries.
-- **EDA**
-  Interactive target, missingness, genre, and trend views.
-- **Modeling**
-  Cross-validation vs. holdout results, feature importance, and prediction diagnostics.
-- **Live Predictor**
-  User-controlled inputs to estimate replayability for a hypothetical track.
-- **Genre Explorer**
-  Filtered view of genre trends, track duration relationships, and top artists.
+```
+outputs/
+  music_dataset_processed.csv     cleaned + joined dataset (~55k rows)
+  model_results.csv               CV and holdout scores for all models
+  feature_importance.csv          GBM feature importances
+  best_gbm_model.joblib           saved tuned GBM
+  lyrics_features.csv             per-song NLP feature matrix
+  lyrics_model_results.csv        lyrics vs metadata vs combined model scores
+  lyrics_summary.md               full lyrics analysis narrative
+  eda_summary.md                  EDA narrative
+  model_summary.md                modeling narrative
+  lyrics1_*.png ... lyrics11_*.png  NLP + model visualizations
+```
