@@ -4,17 +4,6 @@ Predicts **music replayability** by linking data from multiple music APIs and a 
 
 **Authors:** Chinmay Govind · Rohith Yelisetty
 
-## Data Sources
-
-| Source | What it provides |
-|---|---|
-| MusicBrainz | Recording metadata: title, artist, genre, release type, country |
-| ListenBrainz | Popularity signals: total listens, unique listeners, repeat listens |
-| AcousticBrainz | Optional low-level audio features (BPM, key, energy, danceability) |
-| Kaggle 5M Lyrics | NLP features: sentiment, vocabulary richness, LDA topics, repetitiveness |
-
-**Prediction target:** `log_repeat_listens = log(1 + total_listens - unique_listeners)`
-
 ## Project Structure
 
 ```
@@ -26,16 +15,22 @@ models.py              7 regression models + classification, PCA, tuning → out
 lyrics_analysis.py     loads Kaggle lyrics, NLP features, LDA topics, 11 plots, prediction model
 dashboard.py           Streamlit dashboard (6 tabs)
 ```
+## Data Sources
+
+| Source | What it provides |
+|---|---|
+| MusicBrainz | Recording metadata: title, artist, genre, release type, country |
+| ListenBrainz | Popularity signals: total listens, unique listeners, repeat listens |
+| AcousticBrainz | Optional low-level audio features (BPM, key, energy, danceability) |
+| Kaggle 5M Lyrics | NLP features: sentiment, vocabulary richness, LDA topics, repetitiveness |
+
+**Prediction target:** `log_repeat_listens = log(1 + total_listens - unique_listeners)`
+
 
 ## Setup
 
 ```bash
 pip install -r requirements.txt
-```
-
-Optional — needed for live lyric fetch in Song Explorer:
-```bash
-export GENIUS_API_TOKEN="your_token_here"
 ```
 
 For lyrics analysis, download the Kaggle dataset and place it at `lyrics/ds2.csv`:

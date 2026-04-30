@@ -667,35 +667,154 @@ def _plot_feature_correlations(merged_df: pd.DataFrame) -> None:
     print(f"[LYRICS] Saved {LYRICS_CORR_PLOT.name}")
 
 
+_TOPIC_NAMES = [
+    "Foreign Language",
+    "Conversational",
+    "Romance",
+    "Hip-Hop / Street",
+    "Spiritual / Gospel",
+    "Country / Blues",
+    "Party / Dance",
+    "Reflective / Longing",
+]
+
+_TOPIC_COLORS = [
+    "#5C6BC0",  # T0 Foreign Language
+    "#E64A19",  # T1 Conversational
+    "#D81B60",  # T2 Romance
+    "#558B2F",  # T3 Hip-Hop / Street
+    "#F57F17",  # T4 Spiritual / Gospel
+    "#795548",  # T5 Country / Blues
+    "#00838F",  # T6 Party / Dance
+    "#6A1B9A",  # T7 Reflective / Longing
+]
+
+
 def _plot_topic_distribution(
     topic_df: pd.DataFrame,
     topic_words: list[list[str]],
     replay_map: dict[str, float],
 ) -> None:
+    import matplotlib.colors as mcolors
+    from matplotlib.gridspec import GridSpec
+
+    n_topics = len(topic_words)
+    names  = (_TOPIC_NAMES  + [f"Topic {i}" for i in range(n_topics)])[:n_topics]
+    colors = (_TOPIC_COLORS + ["#888888"]   * n_topics)[:n_topics]
+
+    # ── Per-topic stats ──────────────────────────────────────────────────────────
     df = topic_df.copy()
     df["log_repeat_listens"] = df["mbid"].map(replay_map)
     df = df.dropna(subset=["log_repeat_listens"])
-    df["topic_label"] = df["dominant_topic"].apply(
-        lambda i: f"T{i}: {', '.join(topic_words[i][:3])}"
+
+    topic_cols = [f"topic_{i}" for i in range(n_topics)]
+    q75 = np.percentile(df["log_repeat_listens"], 75)
+    q25 = np.percentile(df["log_repeat_listens"], 25)
+    diff = (
+        df[df["log_repeat_listens"] >= q75][topic_cols].mean().values
+        - df[df["log_repeat_listens"] <= q25][topic_cols].mean().values
     )
-    order = (
-        df.groupby("topic_label")["log_repeat_listens"]
-        .median()
-        .sort_values(ascending=False)
-        .index.tolist()
+    mean_replay = np.array([
+        df.loc[df["dominant_topic"] == i, "log_repeat_listens"].mean()
+        if (df["dominant_topic"] == i).sum() > 0 else 0.0
+        for i in range(n_topics)
+    ])
+    song_counts = [(df["dominant_topic"] == i).sum() for i in range(n_topics)]
+
+    # ── Figure ───────────────────────────────────────────────────────────────────
+    BG      = "#F8F9FC"
+    CARD_BG = "#FFFFFF"
+    INK     = "#1E293B"
+    DIMTEXT = "#64748B"
+    GRID    = "#E2E8F0"
+
+    fig = plt.figure(figsize=(20, 10), facecolor=BG)
+    fig.suptitle(
+        "Lyrical Topic Landscape  ·  What Themes Drive Replay?",
+        fontsize=17, fontweight="bold", color=INK, y=0.97,
+    )
+    gs = GridSpec(
+        2, 5, figure=fig,
+        left=0.03, right=0.97, top=0.91, bottom=0.06,
+        wspace=0.28, hspace=0.45,
     )
 
-    fig, ax = plt.subplots(figsize=(14, 6))
-    sns.boxplot(
-        data=df, x="topic_label", y="log_repeat_listens",
-        order=order, palette="tab10", ax=ax, width=0.55,
+    # ── Topic cards (2 rows × 4 cols) ────────────────────────────────────────────
+    for i in range(min(n_topics, 8)):
+        ax = fig.add_subplot(gs[i // 4, i % 4])
+        c  = colors[i]
+
+        ax.set_facecolor(CARD_BG)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        for side, sp in ax.spines.items():
+            sp.set_color(c if side == "left" else GRID)
+            sp.set_linewidth(4 if side == "left" else 0.8)
+
+        # Header band
+        ax.axhspan(0.80, 1.0, color=mcolors.to_rgba(c, 0.10), zorder=0)
+
+        # Title row
+        ax.text(0.08, 0.90, f"T{i}", transform=ax.transAxes,
+                ha="left", va="center", fontsize=10, fontweight="bold",
+                color=c, family="monospace")
+        ax.text(0.26, 0.90, names[i], transform=ax.transAxes,
+                ha="left", va="center", fontsize=9, fontweight="bold",
+                color=INK)
+
+        # Words (fading with rank)
+        for j, word in enumerate(topic_words[i][:6]):
+            ax.text(0.09, 0.72 - j * 0.115, word,
+                    transform=ax.transAxes,
+                    ha="left", va="top",
+                    fontsize=max(9.5 - j * 0.3, 7.5),
+                    color=INK, alpha=max(1.0 - j * 0.13, 0.40))
+
+        # Footer
+        ax.text(0.09, 0.06,
+                f"{song_counts[i]:,} songs · avg replay {mean_replay[i]:.2f}",
+                transform=ax.transAxes, ha="left", va="bottom",
+                fontsize=6.8, color=DIMTEXT)
+
+    # ── Divergence chart (right column, spans both rows) ─────────────────────────
+    ax_bar = fig.add_subplot(gs[:, 4])
+    ax_bar.set_facecolor(CARD_BG)
+
+    order          = np.argsort(diff)
+    sorted_diff    = diff[order]
+    sorted_labels  = [f"T{i}  {names[i]}" for i in order]
+    sorted_colors  = [colors[i] for i in order]
+
+    bars = ax_bar.barh(
+        range(n_topics), sorted_diff,
+        color=sorted_colors, edgecolor="none", height=0.65,
     )
-    ax.set_title("Replayability Distribution by LDA Topic", fontsize=13, fontweight="bold")
-    ax.set_xlabel("Dominant Topic (top 3 words)")
-    ax.set_ylabel("log_repeat_listens")
-    plt.xticks(rotation=20, ha="right")
-    plt.tight_layout()
-    fig.savefig(LYRICS_TOPICS_PLOT, dpi=150, bbox_inches="tight")
+    ax_bar.set_yticks(range(n_topics))
+    ax_bar.set_yticklabels(sorted_labels, fontsize=8, color=INK)
+    ax_bar.axvline(0, color=DIMTEXT, lw=0.9, alpha=0.6)
+    ax_bar.set_title("Which topics drive replay?",
+                     fontsize=10, fontweight="bold", color=INK, pad=10)
+    ax_bar.set_xlabel("Δ mean topic weight\n(high − low replay quartile)",
+                      fontsize=7.5, color=DIMTEXT)
+    for sp in ax_bar.spines.values():
+        sp.set_color(GRID)
+    ax_bar.tick_params(axis="both", colors=DIMTEXT, labelsize=7.5)
+    ax_bar.xaxis.set_tick_params(labelcolor=DIMTEXT)
+
+    for bar, val in zip(bars, sorted_diff):
+        ax_bar.text(
+            val + (0.0002 if val >= 0 else -0.0002),
+            bar.get_y() + bar.get_height() / 2,
+            f"{val:+.4f}", va="center",
+            ha="left" if val >= 0 else "right",
+            fontsize=6.5, color=INK, alpha=0.80,
+        )
+
+    fig.savefig(LYRICS_TOPICS_PLOT, dpi=180, bbox_inches="tight",
+                facecolor=BG)
     plt.close(fig)
     print(f"[LYRICS] Saved {LYRICS_TOPICS_PLOT.name}")
 
