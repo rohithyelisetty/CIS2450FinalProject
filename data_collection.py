@@ -17,10 +17,6 @@ Sources:
                       Multi-threaded since each track is a separate GET. We
                       treat this as optional enrichment because the service was
                       shut down in 2022 so coverage is partial (~43%).
-4. Genius          -> sampled metadata only, mostly kept around for qualitative
-                      checks. The real lyrics analysis uses the Kaggle 5M
-                      dataset (see lyrics_analysis.py) since Genius search is
-                      rate-limited.
 """
 from __future__ import annotations
 
@@ -397,6 +393,7 @@ def _write_collection_summary(
     ab_rows: dict[str, dict],
     # lyrics_rows: dict[str, dict],
 ):
+    """Build and write a JSON summary of collection row counts and per-genre breakdown."""
     genre_counts: dict[str, int] = {}
     for row in mb_rows:
         genre = row.get("genre") or "Unknown"

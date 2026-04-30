@@ -102,6 +102,7 @@ def _mapping_to_frame(mapping: dict[str, dict], schema: dict[str, pl.DataType] |
 
 
 def _winsorize(df: pl.DataFrame, columns: list[str], lower_q: float = 0.01, upper_q: float = 0.99) -> pl.DataFrame:
+    """Clip each specified column to the [lower_q, upper_q] percentile range."""
     for column in columns:
         if column not in df.columns:
             continue
@@ -118,6 +119,7 @@ def _winsorize(df: pl.DataFrame, columns: list[str], lower_q: float = 0.01, uppe
 
 
 def _add_categorical_encodings(df: pl.DataFrame) -> pl.DataFrame:
+    """Label-encode each categorical feature and append a `_enc` integer column."""
     for column in CATEGORICAL_FEATURES:
         if column not in df.columns:
             df = df.with_columns(pl.lit("Unknown").alias(column))
@@ -130,6 +132,7 @@ def _add_categorical_encodings(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def build_dataframe() -> pl.DataFrame:
+    """Join the three API caches, engineer all features, and return the processed frame."""
     mb_rows = _load_pickle(MB_CACHE_FILE)
     lb_rows = _load_pickle(LB_CACHE_FILE)
     ab_rows = _load_pickle(AB_CACHE_FILE) if AB_CACHE_FILE.exists() else {}
@@ -254,6 +257,7 @@ def build_dataframe() -> pl.DataFrame:
 
 
 def export_data_summary(df: pl.DataFrame):
+    """Compute dataset statistics (shape, coverage, null counts) and write to JSON."""
     rows_with_audio = int(df["has_audio_features"].sum()) if "has_audio_features" in df.columns else 0
     complete_audio_rows = (
         df.filter(

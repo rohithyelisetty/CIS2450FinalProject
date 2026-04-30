@@ -51,6 +51,7 @@ def _save(fig, key: str):
 
 
 def eda_target_distribution(df: pl.DataFrame) -> str:
+    """Plot raw vs. log-transformed repeat-listen distributions and return a summary blurb."""
     raw = df[RAW_TARGET].cast(pl.Float64).drop_nulls().to_numpy()
     log = df[TARGET].drop_nulls().to_numpy()
     clip = float(np.percentile(raw, 99.5))
@@ -77,6 +78,7 @@ def eda_target_distribution(df: pl.DataFrame) -> str:
 
 
 def eda_genre_ranking(df: pl.DataFrame) -> str:
+    """Bar chart of median repeat listens ranked by genre."""
     grouped = (
         df.group_by("genre")
         .agg(pl.col(RAW_TARGET).median().alias("median_repeats"))
@@ -102,6 +104,7 @@ def eda_genre_ranking(df: pl.DataFrame) -> str:
 
 
 def eda_decade_trend(df: pl.DataFrame) -> str:
+    """Line chart of median log replay across release decades with ±1-std shading."""
     decade_df = (
         df.filter(pl.col("release_decade").is_not_null())
         .group_by("release_decade")
@@ -133,6 +136,7 @@ def eda_decade_trend(df: pl.DataFrame) -> str:
 
 
 def eda_tempo_danceability(df: pl.DataFrame) -> str:
+    """Scatter plot of tempo vs. danceability colored by log replay target."""
     subset = df.filter(pl.col("tempo").is_not_null() & pl.col("danceability").is_not_null())
     if len(subset) < 500:
         return "AcousticBrainz coverage was too limited to render the tempo/danceability scatter plot."
@@ -162,6 +166,7 @@ def eda_tempo_danceability(df: pl.DataFrame) -> str:
 
 
 def eda_correlation(df: pl.DataFrame) -> str:
+    """Lower-triangle correlation heatmap for numeric features and the replay target."""
     numeric_cols = [
         TARGET,
         "duration_sec",
@@ -203,6 +208,7 @@ def eda_correlation(df: pl.DataFrame) -> str:
 
 
 def eda_duration_buckets(df: pl.DataFrame) -> str:
+    """Bar chart of median log replay for six track-duration buckets."""
     edges = [0.0, 90.0, 180.0, 240.0, 300.0, 420.0, 900.0]
     labels = ["<1.5min", "1.5-3min", "3-4min", "4-5min", "5-7min", "7+min"]
     bucketed = (
@@ -231,6 +237,7 @@ def eda_duration_buckets(df: pl.DataFrame) -> str:
 
 
 def eda_missingness(df: pl.DataFrame) -> str:
+    """Horizontal bar chart of % missing values for the 20 most incomplete columns."""
     missing = (
         df.null_count()
         .transpose(include_header=True, column_names=["nulls"])
@@ -258,6 +265,7 @@ def eda_missingness(df: pl.DataFrame) -> str:
 
 
 def eda_outliers_by_genre(df: pl.DataFrame) -> str:
+    """Box plots of log replay distributions by genre, showing upper-tail outliers."""
     pdf = df.select(["genre", TARGET]).to_pandas()
     order = (
         pdf.groupby("genre")[TARGET]
@@ -292,6 +300,7 @@ def eda_outliers_by_genre(df: pl.DataFrame) -> str:
 
 
 def run_statistical_tests(df: pl.DataFrame) -> str:
+    """Run Kruskal-Wallis (genre) and Spearman (duration) tests and return formatted text."""
     top_genres = (
         df.group_by("genre")
         .agg(pl.len().alias("n"))
@@ -327,6 +336,7 @@ def run_statistical_tests(df: pl.DataFrame) -> str:
 
 
 def write_summary_markdown(df: pl.DataFrame, sections: list[tuple[str, str]]):
+    """Assemble EDA findings, dataset context, and statistical tests into a markdown report."""
     audio_rows = int(df["has_audio_features"].sum()) if "has_audio_features" in df.columns else 0
     lines = [
         "# EDA Summary",

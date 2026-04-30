@@ -95,6 +95,7 @@ def _load() -> pl.DataFrame:
 
 
 def choose_feature_sets(df: pl.DataFrame):
+    """Return numeric/categorical feature lists based on whether audio coverage meets the threshold."""
     audio_coverage = (
         float(df["has_audio_features"].mean())
         if "has_audio_features" in df.columns and len(df) > 0
@@ -136,6 +137,7 @@ def _columns_with_observed_values(df: pl.DataFrame, columns: list[str]) -> list[
 
 
 def prepare_regression_data(df: pl.DataFrame):
+    """Filter, cast, and split the processed frame into X/y/meta arrays for regression."""
     numeric_features, categorical_features, context = choose_feature_sets(df)
     numeric_features = _columns_with_observed_values(df, numeric_features)
     categorical_features = _columns_with_observed_values(df, categorical_features)
@@ -166,6 +168,7 @@ def prepare_regression_data(df: pl.DataFrame):
 
 
 def make_preprocessor(numeric_features: list[str], categorical_features: list[str], scale_numeric: bool = True):
+    """Build the impute+scale/OHE ColumnTransformer used inside every sklearn Pipeline."""
     numeric_steps = [("impute", SimpleImputer(strategy="median"))]
     if scale_numeric:
         numeric_steps.append(("scale", StandardScaler()))
@@ -185,6 +188,7 @@ def make_preprocessor(numeric_features: list[str], categorical_features: list[st
 
 
 def make_pipeline(estimator, numeric_features: list[str], categorical_features: list[str], scale_numeric: bool = True) -> Pipeline:
+    """Wrap a preprocessor and estimator into a single sklearn Pipeline."""
     return Pipeline(
         steps=[
             ("preprocess", make_preprocessor(numeric_features, categorical_features, scale_numeric=scale_numeric)),
@@ -199,6 +203,7 @@ def make_pca_pipeline(
     categorical_features: list[str],
     n_components: float = 0.95,
 ) -> Pipeline:
+    """Like make_pipeline but inserts a PCA step between preprocessing and the estimator."""
     return Pipeline(
         steps=[
             ("preprocess", make_preprocessor(numeric_features, categorical_features, scale_numeric=True)),
@@ -217,6 +222,7 @@ def evaluate_model(
     y_test: np.ndarray,
     cv: KFold,
 ) -> dict:
+    """Run 5-fold CV then holdout evaluation; returns a metrics dict with the fitted pipeline."""
     scoring = {
         "rmse": "neg_root_mean_squared_error",
         "mae": "neg_mean_absolute_error",
@@ -258,6 +264,7 @@ def tune_gbm(
     categorical_features: list[str],
     cv: KFold,
 ) -> RandomizedSearchCV:
+    """RandomizedSearchCV over GBM hyperparameters; returns the fitted search object."""
     param_dist = {
         "model__n_estimators": [150, 250, 350, 500],
         "model__learning_rate": [0.02, 0.05, 0.08, 0.1],
@@ -298,6 +305,7 @@ def _origin_feature_name(transformed_name: str) -> str:
 
 
 def build_feature_importance_table(model_results: list[dict]) -> pl.DataFrame:
+    """Extract per-model feature importances (tree or linear coefficients) into a Polars frame."""
     rows: list[dict] = []
     for result in model_results:
         name = result["model"]
@@ -332,6 +340,7 @@ def build_feature_importance_table(model_results: list[dict]) -> pl.DataFrame:
 
 
 def build_pca_summary(pipe: Pipeline) -> dict:
+    """Extract explained-variance stats from the PCA step of a fitted pipeline."""
     pca = pipe.named_steps["pca"]
     explained = pca.explained_variance_ratio_
     cumulative = np.cumsum(explained)
@@ -344,6 +353,7 @@ def build_pca_summary(pipe: Pipeline) -> dict:
 
 
 def save_predictions(meta_test: pd.DataFrame, y_test: np.ndarray, results: list[dict]):
+    """Write actual vs. predicted values for every model to the predictions CSV."""
     output = meta_test.copy()
     output["y_true"] = y_test
     for result in results:
@@ -361,6 +371,7 @@ def save_predictions(meta_test: pd.DataFrame, y_test: np.ndarray, results: list[
 
 
 def imbalance_classification_demo(df: pl.DataFrame, numeric_features: list[str], categorical_features: list[str]) -> dict:
+    """Compare logistic regression with and without class_weight='balanced' on the binary target."""
     if CLASSIFICATION_TARGET not in df.columns:
         return {}
 
@@ -418,6 +429,7 @@ def write_model_summary(
     modeling_context: dict,
     pca_summary: dict,
 ):
+    """Write a markdown report with model metrics, top features, tuned params, and imbalance results."""
     best_model = results_df.sort("test_r2", descending=True).row(0, named=True)
     top_features = (
         feature_df.filter(pl.col("model") == best_model["model"])
@@ -475,6 +487,7 @@ def write_model_summary(
 
 
 def _plot_model_comparison(results_df: pl.DataFrame):
+    """Bar charts of test R² and RMSE for all regression models side-by-side."""
     palette = ["#355C7D", "#6C5B7B", "#C06C84", "#F67280", "#F8B195", "#2A9D8F", "#8C6D62", "#7A9E9F"]
     labels = results_df["model"].to_list()
 
@@ -492,6 +505,7 @@ def _plot_model_comparison(results_df: pl.DataFrame):
 
 
 def _plot_feature_importance(feature_df: pl.DataFrame):
+    """Horizontal bar chart of the tuned GBM's top 15 feature importances."""
     display_df = (
         feature_df.filter(pl.col("model") == "Gradient Boosting (tuned)")
         .head(15)
@@ -511,6 +525,7 @@ def _plot_feature_importance(feature_df: pl.DataFrame):
 
 
 def _plot_predictions(y_test: np.ndarray, predictions: np.ndarray):
+    """Scatter plot of actual vs. predicted log replay values with a perfect-prediction diagonal."""
     fig, ax = plt.subplots(figsize=(7, 7))
     ax.scatter(y_test, predictions, alpha=0.18, s=12, edgecolors="none", color="#355C7D")
     lower = min(float(np.min(y_test)), float(np.min(predictions)))

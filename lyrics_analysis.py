@@ -9,11 +9,8 @@ in the high-replay quartile vs the low-replay quartile.
 How the matching works (this is the "entity linking" piece):
 - The Kaggle CSV is 9.2 GB and has no MBID column, so we can't just join.
 - We normalize artist + title on both sides (lowercase, strip punctuation,
-  collapse whitespace) and then do an exact lookup. The match is cached as a
+  collapse whitespace) and then do fuzzy matching. The match is cached as a
   pickle so the 9.2 GB file gets streamed exactly once even on re-runs.
-- ~37% match rate (20,759 songs out of ~55k tracks). That's the cross-dataset
-  reconciliation moment — internal MBID-keyed data linking to an external
-  source that doesn't share a key.
 
 Per-song features computed:
 - VADER sentiment (compound, positive, negative, neutral).
@@ -530,6 +527,7 @@ def run_lda(
 # ── 5. plots ──────────────────────────────────────────────────────────────────
 
 def _plot_sentiment_by_quartile(merged_df: pd.DataFrame) -> None:
+    """Violin and stacked-bar VADER sentiment plots split by replay quartile."""
     df = merged_df.dropna(subset=["sentiment_compound", TARGET]).copy()
     df["replay_quartile"] = pd.qcut(
         df[TARGET], q=4, labels=["Q1 (Low)", "Q2", "Q3", "Q4 (High)"]
@@ -566,6 +564,7 @@ def _plot_sentiment_by_quartile(merged_df: pd.DataFrame) -> None:
 
 
 def _plot_word_frequency(word_freq_df: pd.DataFrame) -> None:
+    """Horizontal bar charts of words most distinctive to high- vs. low-replay songs."""
     top_high = word_freq_df.nlargest(20, "freq_ratio")
     top_low  = word_freq_df.nsmallest(20, "freq_ratio")
 
@@ -589,6 +588,7 @@ def _plot_word_frequency(word_freq_df: pd.DataFrame) -> None:
 
 
 def _plot_word_clouds(word_freq_df: pd.DataFrame) -> None:
+    """Word clouds generated from the high-replay and low-replay song vocabularies."""
     try:
         from wordcloud import WordCloud
     except ImportError:
@@ -625,6 +625,7 @@ def _plot_word_clouds(word_freq_df: pd.DataFrame) -> None:
 
 
 def _plot_feature_correlations(merged_df: pd.DataFrame) -> None:
+    """Heatmap of pairwise Pearson correlations among lyrics features and the replay target."""
     feature_cols = [
         "word_count", "unique_word_count", "type_token_ratio",
         "line_count", "avg_line_length", "repetitiveness",
@@ -676,6 +677,7 @@ def _plot_topic_distribution(
     topic_words: list[list[str]],
     replay_map: dict[str, float],
 ) -> None:
+    """Topic card grid (top words + stats) and a replay-divergence bar chart for LDA topics."""
     import matplotlib.colors as mcolors
     from matplotlib.gridspec import GridSpec
 
@@ -801,6 +803,7 @@ def _plot_topic_distribution(
 
 
 def _plot_complexity_vs_replay(merged_df: pd.DataFrame) -> None:
+    """Scatter plots of complexity metrics vs. log replay with linear trend lines and Pearson r."""
     pairs = [
         ("type_token_ratio",   "Vocabulary Richness (TTR)"),
         ("repetitiveness",     "Repetitiveness (dup-line ratio)"),
@@ -841,6 +844,7 @@ def _plot_complexity_vs_replay(merged_df: pd.DataFrame) -> None:
 
 
 def _plot_sentiment_by_genre(merged_df: pd.DataFrame) -> None:
+    """Box plots of VADER compound scores across genres, sorted by median sentiment."""
     df = merged_df.dropna(subset=["sentiment_compound", "genre"]).copy()
     if df["genre"].nunique() < 2:
         return
@@ -871,6 +875,7 @@ def _plot_sentiment_by_genre(merged_df: pd.DataFrame) -> None:
 # ── 5b. new plots ─────────────────────────────────────────────────────────────
 
 def _plot_bigrams(bigram_df: pd.DataFrame) -> None:
+    """Horizontal bar charts of 2-word phrases most distinctive to high- vs. low-replay songs."""
     top_high = bigram_df.nlargest(20, "freq_ratio")
     top_low  = bigram_df.nsmallest(20, "freq_ratio")
 
@@ -895,6 +900,7 @@ def _plot_bigrams(bigram_df: pd.DataFrame) -> None:
 
 
 def _plot_rarity_vs_replay(merged_df: pd.DataFrame) -> None:
+    """Violin and scatter of rare-word ratio across replay quartiles with trend line."""
     df = merged_df.dropna(subset=["rare_word_ratio", TARGET]).copy()
     if len(df) < 10:
         return
@@ -935,6 +941,7 @@ def _plot_rarity_vs_replay(merged_df: pd.DataFrame) -> None:
 
 
 def _plot_word_length_vs_replay(merged_df: pd.DataFrame) -> None:
+    """Box and scatter of average word length across replay quartiles with trend line."""
     df = merged_df.dropna(subset=["avg_word_length", TARGET]).copy()
     if len(df) < 10:
         return
@@ -1074,6 +1081,7 @@ def run_lyrics_model(
 
 
 def _plot_lyrics_model_comparison(results_df: pd.DataFrame) -> None:
+    """Bar charts of holdout R² and RMSE for lyrics-only, metadata-only, and combined models."""
     order = ["Lyrics Only", "Metadata Only", "Lyrics + Metadata"]
     pivot_r2   = results_df.pivot(index="feature_set", columns="algorithm", values="holdout_r2").reindex(order)
     pivot_rmse = results_df.pivot(index="feature_set", columns="algorithm", values="holdout_rmse").reindex(order)
@@ -1110,6 +1118,7 @@ def write_lyrics_summary(
     topic_words: list[list[str]],
     model_results_df: pd.DataFrame | None = None,
 ) -> None:
+    """Write lyrics feature stats, word lists, topic summaries, and model results to markdown."""
     def _r(col: str) -> str:
         try:
             return f"{merged_df[[col, TARGET]].dropna().corr().iloc[0, 1]:.3f}"
