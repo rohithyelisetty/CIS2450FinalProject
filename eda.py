@@ -24,13 +24,6 @@ answered to justify a downstream modeling choice.
    the reason we treat audio as optional rather than mandatory.
 8. Outliers by genre -> upper-tail outliers survive the log transform, which
    is why we compare tree-based models against the linear baselines.
-
-Rubric coverage hit from this file:
-- EDA with 5+ visualizations (we have 8).
-- Statistical tests: Kruskal-Wallis across genres and Spearman on duration vs
-  log replay target (in `run_statistical_tests`).
-- Insight-driven feature decisions documented in the markdown summary that
-  data_processing.py and models.py both use.
 """
 from __future__ import annotations
 

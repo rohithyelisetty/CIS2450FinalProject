@@ -20,24 +20,6 @@ Plus a classification demo on the derived `is_high_replay` target (top 25% of
 repeat_listens) comparing logistic regression with and without
 `class_weight='balanced'` — that's where we show how rebalancing trades off
 accuracy vs F1.
-
-Rubric coverage hit from this file:
-- Five+ ML algorithms compared on the same train/holdout split.
-- Cross-validation: 5-fold KFold inside `cross_validate`, not just a single
-  train/test split.
-- Feature scaling: StandardScaler in the pipeline for all linear models.
-- Imputation inside the pipeline (median for numeric, most_frequent for
-  categorical) so no leakage during CV.
-- PCA: 95% variance retention, compared head-to-head against direct Ridge.
-- Hyperparameter tuning: RandomizedSearchCV on the GBM with 15 candidates and
-  5-fold CV (`tune_gbm`).
-- Ensemble methods: Random Forest and both Gradient Boosting variants.
-- Class imbalance demo: `imbalance_classification_demo` runs LogReg with and
-  without balanced class weights and writes the metric comparison.
-- Feature importance: extracted from every tree-based model and the |coef| of
-  every linear model, written to `feature_importance.csv` for the dashboard.
-- Model serialization: tuned GBM is saved with joblib so the dashboard's
-  Prediction Console can score new inputs without retraining.
 """
 from __future__ import annotations
 

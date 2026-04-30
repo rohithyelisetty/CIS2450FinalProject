@@ -21,13 +21,6 @@ Sources:
                       checks. The real lyrics analysis uses the Kaggle 5M
                       dataset (see lyrics_analysis.py) since Genius search is
                       rate-limited.
-
-Rubric coverage hit from this file:
-- Multi-source data collection from 3+ APIs (plus the offline Kaggle source).
-- Caching / reproducibility: every API hit is pickled and re-used on re-runs,
-  with a separate "attempted" set for AcousticBrainz so we don't re-query MBIDs
-  that 404'd on the first pass.
-- Concurrency: AcousticBrainz uses ThreadPoolExecutor for the per-track fetch.
 """
 from __future__ import annotations
 
