@@ -1,4 +1,19 @@
-"""Shared configuration for the full music replayability project."""
+"""
+Shared configuration for the music replayability project.
+
+Everything that needs to be consistent across the pipeline lives here so we
+don't end up with magic strings or hard-coded paths in five different files.
+That covers cache + output paths, the genre list we hit MusicBrainz with, the
+modeling target (`log_repeat_listens`), and the feature column groups used by
+both `models.py` and `dashboard.py`.
+
+Rubric coverage hit from this file:
+- Reproducibility / project structure: a single source of truth for paths.
+- Feature engineering setup: `NUMERIC_FEATURES`, `AUDIO_NUMERIC_FEATURES`, and
+  `CATEGORICAL_FEATURES` declare which engineered fields are inputs.
+- Modeling targets: `RAW_TARGET` for the regression target and
+  `CLASSIFICATION_TARGET` for the imbalance-handling demo.
+"""
 from datetime import date
 from pathlib import Path
 

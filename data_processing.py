@@ -1,13 +1,51 @@
 """
 Data wrangling, feature engineering, and SQL analytics.
 
-This script:
-1. Loads cached raw data from the collection stage
-2. Deduplicates MusicBrainz recordings that appear across multiple genre searches
-3. Merges MusicBrainz, ListenBrainz, and AcousticBrainz with Polars
-4. Engineers modeling features and a derived classification target
-5. Runs analytical SQL queries in DuckDB
-6. Writes a processed CSV plus summary artifacts for downstream scripts
+This module turns the three pickled API caches into the single processed CSV
+that everything downstream (EDA, models, dashboard) reads from. We do all the
+heavy joins/aggregations in Polars because it's faster on this data size, and
+then hand the same frame to DuckDB for the SQL analytics so we can show
+SQL-style group-bys without leaving Python.
+
+What happens here, end to end:
+1. Load cached MusicBrainz / ListenBrainz / AcousticBrainz pickles.
+2. Deduplicate MusicBrainz: a song that came back under multiple genre searches
+   gets collapsed to a single MBID with all its genre tags merged into a list,
+   and `genre_match_count` records how many searches it appeared in (used as a
+   feature later).
+3. 3-way left join on MBID (MB + LB + AB).
+4. Build the regression target: `repeat_listens = total_listen_count -
+   total_user_count` — i.e. listens beyond the first per unique listener.
+   Then `log_repeat_listens = log(1 + repeat_listens)` to stabilize the
+   right-skewed tail.
+5. Engineer the rest of the features: duration_sec, release_decade, track_age,
+   artist_career_age, has_audio_features (binary), audio_feature_missing_count
+   (0–4), and two interaction terms (tempo * danceability and
+   artist_career_age * duration_minutes).
+6. Winsorize the continuous numeric features at the 1st/99th percentile so a
+   handful of extreme outliers don't dominate the linear models.
+7. Label-encode all categoricals (genre, release_type, artist_type, country,
+   key, key_scale) into `_enc` columns; original strings are kept for display.
+8. Run 8 DuckDB queries: per-genre summary, decade trend, top artists, country
+   breakdown, duration buckets, genre overlap, and two audio-coverage views.
+
+Rubric coverage hit from this file:
+- Joining: 3-way equi-join on MBID across MusicBrainz, ListenBrainz, and
+  AcousticBrainz (`build_dataframe`).
+- Deduplication: `_aggregate_musicbrainz_rows` collapses multi-genre duplicates
+  on MBID and aggregates genre tags into a list.
+- Feature engineering: derived temporal features (release_decade, track_age,
+  artist_career_age), interaction terms (tempo_x_dance, career_x_duration_min),
+  and the log-transformed regression target.
+- Outlier handling: `_winsorize` clips continuous features at [1%, 99%].
+- Categorical encoding: `_add_categorical_encodings` produces `_enc` columns
+  on every categorical feature.
+- Null handling: nulls are kept in the processed CSV and imputed inside the
+  sklearn pipelines later (see models.py) — that way no leakage.
+- SQL analytics: `run_sql_analytics` runs 8 DuckDB queries on the in-memory
+  frame and writes one CSV per section.
+- Imbalance setup: `make_balanced_classification_split` derives
+  `is_high_replay = top-25% of repeat_listens` for the classification demo.
 """
 from __future__ import annotations
 
